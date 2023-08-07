@@ -18,7 +18,7 @@ class _PerformanceMeter(object):
         self.best_result = {'improvement': -1e+2, 'epoch': 0, 'result': 0}
         self.improvement = None
         
-        self.losses = {task: self.task_dict[task]['loss_fn'] for task in self.task_name}
+        self.losses = {task: self.task_dict[task]['loss_fn']() for task in self.task_name}
         self.metrics = {task: self.task_dict[task]['metrics_fn'] for task in self.task_name}
         
         self.results = {task:[] for task in self.task_name}

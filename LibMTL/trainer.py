@@ -142,7 +142,12 @@ class Trainer(nn.Module):
         except:
             loader[1] = iter(loader[0])
             data, label = loader[1].next()
-        data = data.to(self.device, non_blocking=True)
+
+        if type(data) == dict:
+            for key in data:
+                data[key] = data[key].to(self.device, non_blocking=True)
+        else:
+            data = data.to(self.device, non_blocking=True)
         if not self.multi_input:
             for task in self.task_name:
                 label[task] = label[task].to(self.device, non_blocking=True)
@@ -225,6 +230,8 @@ class Trainer(nn.Module):
                         train_pred = self.process_preds(train_pred, task)
                         train_losses[tn] = self._compute_loss(train_pred, train_gt, task)
                         self.meter.update(train_pred, train_gt, task)
+                if 0 == batch_index % 100:
+                    print("epoch: ", epoch, "rito: ", batch_index/train_batch, "loss: ", train_losses, "meter: ", self.meter.loss_item)
 
                 self.optimizer.zero_grad()
                 w = self.model.backward(train_losses, **self.kwargs['weight_args'])
@@ -247,9 +254,9 @@ class Trainer(nn.Module):
                     self.scheduler.step(val_improvement)
                 else:
                     self.scheduler.step()
-            if self.save_path is not None and self.meter.best_result['epoch'] == epoch:
-                torch.save(self.model.state_dict(), os.path.join(self.save_path, 'best.pt'))
-                print('Save Model {} to {}'.format(epoch, os.path.join(self.save_path, 'best.pt')))
+            # if self.save_path is not None and self.meter.best_result['epoch'] == epoch:
+            torch.save(self.model.state_dict(), os.path.join(self.save_path, '{}.pt'.format(epoch)))
+            print('Save Model {} to {}'.format(epoch, os.path.join(self.save_path, '{}.pt'.format(epoch))))
         self.meter.display_best_result()
         if return_weight:
             return self.batch_weight

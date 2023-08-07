@@ -22,9 +22,9 @@ _parser.add_argument('--load_path', type=str, default=None,
 ## optim
 _parser.add_argument('--optim', type=str, default='adam',
                     help='optimizer for training, option: adam, sgd, adagrad, rmsprop')
-_parser.add_argument('--lr', type=float, default=1e-4, help='learning rate for all types of optim')
+_parser.add_argument('--lr', type=float, default=2e-5, help='learning rate for all types of optim')
 _parser.add_argument('--momentum', type=float, default=0.9, help='momentum for sgd')
-_parser.add_argument('--weight_decay', type=float, default=1e-5, help='weight decay for all types of optim')
+_parser.add_argument('--weight_decay', type=float, default=0.01, help='weight decay for all types of optim')
 ## scheduler
 _parser.add_argument('--scheduler', type=str, #default='step',
                     help='learning rate scheduler for training, option: step, cos, exp')
