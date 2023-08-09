@@ -129,7 +129,7 @@ class Trainer(nn.Module):
                 'reduce': torch.optim.lr_scheduler.ReduceLROnPlateau,
             }
         optim_arg = {k: v for k, v in optim_param.items() if k != 'optim'}
-        self.optimizer = optim_dict[optim_param['optim']](self.model.parameters(), **optim_arg)
+        self.optimizer = optim_dict[optim_param['optim']](self.model.decoders.parameters(), **optim_arg)
         if scheduler_param is not None:
             scheduler_arg = {k: v for k, v in scheduler_param.items() if k != 'scheduler'}
             self.scheduler = scheduler_dict[scheduler_param['scheduler']](self.optimizer, **scheduler_arg)
@@ -299,3 +299,43 @@ class Trainer(nn.Module):
         self.meter.reinit()
         if return_improvement:
             return improvement
+
+    def test_v2(self, test_dataloaders, epoch=None, mode='test', return_improvement=False):
+        r'''The test process of multi-task learning.
+
+        Args:
+            test_dataloaders (dict or torch.utils.data.DataLoader): If ``multi_input`` is ``True``, \
+                            it is a dictionary of name-dataloader pairs. Otherwise, it is a single \
+                            dataloader which returns data and a dictionary of name-label pairs in each iteration.
+            epoch (int, default=None): The current epoch. 
+        '''
+        test_loader, test_batch = self._prepare_dataloaders(test_dataloaders)
+        
+        thresh = 0.5
+        result = {"0-0": 0, "0-1": 0, "1-0": 0, "1-1": 0}
+        import torch.nn.functional as F
+        self.model.eval()
+        with torch.no_grad():
+            for tn, task in enumerate(self.task_name):
+                for batch_index in range(test_batch[tn]):
+                    test_input, test_gt = self._process_data(test_loader[task])
+                    test_pred = self.model(test_input, task)
+                    test_pred = test_pred[task]
+                    test_pred = self.process_preds(test_pred)
+                    test_pred = F.softmax(test_pred)
+                    preds = test_pred.cpu().tolist()
+                    gts = test_gt.cpu().tolist()
+                    for item in zip(preds, gts):
+                        pred = 1 if item[0][1] > thresh else 0
+                        gt = item[1]
+                        if gt == 0 and pred == 0:
+                            result["0-0"] = result["0-0"]+1
+                        if gt == 0 and pred == 1:
+                            result["0-1"] = result["0-1"]+1
+                        if gt == 1 and pred == 0:
+                            result["1-0"] = result["1-0"]+1
+                        if gt == 1 and pred == 1:
+                            result["1-1"] = result["1-1"]+1
+                    print(result)
+
+

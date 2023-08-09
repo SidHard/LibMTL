@@ -41,7 +41,8 @@ class load_dataset(torch.utils.data.Dataset):
 class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
-        self.bert = BertModel.from_pretrained('bert-base-chinese', add_pooling_layer=True)
+        # self.bert = BertModel.from_pretrained('bert-base-chinese', add_pooling_layer=True)
+        self.bert = BertModel.from_pretrained('results/checkpoint-75896/')
     
     def forward(self, inputs):
         outputs = self.bert(input_ids=inputs['input_ids'],
